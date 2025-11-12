@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowRight, Search } from "lucide-react";
 
 const books = [
   {
@@ -62,11 +64,24 @@ const books = [
 ];
 
 export const FeaturedBooks = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredBooks = books.filter((book) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    return (
+      book.title.toLowerCase().includes(query) ||
+      book.author.toLowerCase().includes(query) ||
+      book.category.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <section className="py-16 md:py-24 bg-background">
       <div className="container px-4 md:px-6">
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
               Featured Books
@@ -82,12 +97,40 @@ export const FeaturedBooks = () => {
           </Button>
         </div>
 
-        {/* Books Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {books.map((book, index) => (
-            <BookCard key={index} {...book} />
-          ))}
+        {/* Search Bar */}
+        <div className="mb-8 max-w-xl">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by title, author, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 bg-card border-border focus-visible:ring-primary"
+            />
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Found {filteredBooks.length} {filteredBooks.length === 1 ? "book" : "books"}
+            </p>
+          )}
         </div>
+
+        {/* Books Grid */}
+        {filteredBooks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredBooks.map((book, index) => (
+              <BookCard key={index} {...book} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg text-muted-foreground mb-2">No books found</p>
+            <p className="text-sm text-muted-foreground">
+              Try searching with different keywords
+            </p>
+          </div>
+        )}
 
         {/* Mobile View All Button */}
         <div className="mt-8 flex justify-center md:hidden">
