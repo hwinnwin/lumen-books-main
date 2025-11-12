@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, Sparkles } from "lucide-react";
+import { BookOpen, Sparkles, PenLine } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-library.jpg";
 
 export const Hero = () => {
+  const navigate = useNavigate();
+  
   return (
     <section className="relative overflow-hidden bg-gradient-hero">
       <div className="container px-4 py-20 md:py-32 md:px-6">
@@ -24,12 +27,17 @@ export const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-medium">
+              <Button 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-medium"
+                onClick={() => navigate("/create")}
+              >
+                <PenLine className="mr-2 h-5 w-5" />
+                Write Your Story
+              </Button>
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-medium">
                 <BookOpen className="mr-2 h-5 w-5" />
                 Start Exploring
-              </Button>
-              <Button size="lg" variant="outline" className="border-border hover:bg-muted/50">
-                Learn More
               </Button>
             </div>
 
