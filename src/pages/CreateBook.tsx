@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Sparkles, Save, Eye } from "lucide-react";
+import { BookOpen, Sparkles, Save, Eye, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { saveBook, updateBook, getBookById } from "@/types/book";
 
 export default function CreateBook() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditing = !!editId;
+
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -21,6 +26,25 @@ export default function CreateBook() {
     content: "",
     coverColor: "#f59e0b",
   });
+
+  useEffect(() => {
+    if (editId) {
+      const book = getBookById(editId);
+      if (book) {
+        setFormData({
+          title: book.title,
+          author: book.author,
+          category: book.category,
+          description: book.description,
+          content: book.content,
+          coverColor: book.coverColor,
+        });
+      } else {
+        toast.error("Book not found");
+        navigate("/my-books");
+      }
+    }
+  }, [editId, navigate]);
 
   const categories = ["Fiction", "Sci-Fi", "Fantasy", "Mystery", "Romance", "Adventure", "Historical", "Non-Fiction"];
   const coverColors = [
@@ -40,21 +64,23 @@ export default function CreateBook() {
       return;
     }
 
-    // Here you would typically save to a database
-    // For now, we'll just show a success message
-    toast.success("Your book has been created! 📚", {
-      description: `"${formData.title}" is now part of the Lumen Books collection.`,
-    });
-
-    // Reset form
-    setFormData({
-      title: "",
-      author: "",
-      category: "",
-      description: "",
-      content: "",
-      coverColor: "#f59e0b",
-    });
+    if (isEditing && editId) {
+      const updated = updateBook(editId, formData);
+      if (updated) {
+        toast.success("Your book has been updated! 📚", {
+          description: `"${formData.title}" has been saved.`,
+        });
+        navigate("/my-books");
+      } else {
+        toast.error("Failed to update book");
+      }
+    } else {
+      const newBook = saveBook(formData);
+      toast.success("Your book has been created! 📚", {
+        description: `"${formData.title}" is now in your library.`,
+      });
+      navigate("/my-books");
+    }
   };
 
   const handlePreview = () => {
@@ -73,13 +99,28 @@ export default function CreateBook() {
         <div className="container px-4 py-12 md:px-6">
           {/* Header Section */}
           <div className="max-w-4xl mx-auto mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/my-books")}
+              className="mb-4"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to My Books
+            </Button>
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Write Your Story</h1>
-                <p className="text-muted-foreground">Create and share your own book with the Lumen community</p>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  {isEditing ? "Edit Your Story" : "Write Your Story"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {isEditing 
+                    ? "Make changes to your book and save when you're done"
+                    : "Create and share your own book with the Lumen community"
+                  }
+                </p>
               </div>
             </div>
           </div>
@@ -203,7 +244,7 @@ export default function CreateBook() {
                     className="flex-1 bg-primary hover:bg-primary/90"
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    Publish Book
+                    {isEditing ? "Save Changes" : "Publish Book"}
                   </Button>
                   
                   <Button
@@ -221,7 +262,7 @@ export default function CreateBook() {
                     type="button"
                     size="lg"
                     variant="ghost"
-                    onClick={() => navigate("/")}
+                    onClick={() => navigate("/my-books")}
                   >
                     Cancel
                   </Button>
