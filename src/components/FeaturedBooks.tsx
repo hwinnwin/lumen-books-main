@@ -51,6 +51,14 @@ const books = [
     rating: 4.9,
     coverColor: "bg-gradient-to-br from-amber-700 to-orange-900",
   },
+  {
+    bookId: "luminous-legends-vol-1",
+    title: "Luminous Legends: Volume 1",
+    author: "Aurora Chen",
+    category: "Fantasy",
+    rating: 4.9,
+    coverColor: "bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500",
+  },
 ];
 
 export const FeaturedBooks = () => {

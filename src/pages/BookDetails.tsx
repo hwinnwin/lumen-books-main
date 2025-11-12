@@ -78,6 +78,53 @@ const booksData = {
         content: "Best self-help book I've ever read. Clear, actionable, and backed by science. A must-read for anyone looking to improve their life."
       }
     ]
+  },
+  "luminous-legends-vol-1": {
+    title: "Luminous Legends: Volume 1",
+    author: "Aurora Chen",
+    category: "Fantasy",
+    rating: 4.9,
+    coverColor: "bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500",
+    description: "In a world where light itself holds magic, young Kai discovers they possess the rare gift of luminescence manipulation. As ancient darkness threatens to consume the Seven Realms, Kai must master their powers and unite the legendary Luminary Order.",
+    fullDescription: "An epic tale of courage, friendship, and the eternal battle between light and shadow. When the mysterious Shadow Veil begins spreading across the realms, extinguishing all sources of light and hope, Kai embarks on a breathtaking journey to awaken the dormant Luminaries. Along the way, they'll forge unexpected alliances, face their deepest fears, and discover that true light comes from within.",
+    pages: 456,
+    publishDate: "November 1, 2025",
+    isbn: "978-1234567890",
+    language: "English",
+    reviews: [
+      {
+        id: 1,
+        author: "Luna Martinez",
+        avatar: "LM",
+        rating: 5,
+        date: "3 days ago",
+        content: "Finally! This book is absolutely magical. The world-building is incredible and the characters are so well-developed. Can't wait for Volume 2!"
+      },
+      {
+        id: 2,
+        author: "River Thompson",
+        avatar: "RT",
+        rating: 5,
+        date: "1 week ago",
+        content: "My kids and I read this together - we were all hooked from page one. The magic system is so creative and the story moves at a perfect pace."
+      },
+      {
+        id: 3,
+        author: "Phoenix Lee",
+        avatar: "PL",
+        rating: 5,
+        date: "2 weeks ago",
+        content: "Aurora Chen has created something truly special. The themes of finding your inner light resonate on so many levels. A must-read!"
+      },
+      {
+        id: 4,
+        author: "Sage Williams",
+        avatar: "SW",
+        rating: 4,
+        date: "3 weeks ago",
+        content: "Beautifully written fantasy with stunning imagery. Some parts felt a bit slow but the climax was worth it. Highly recommended!"
+      }
+    ]
   }
 };
 
