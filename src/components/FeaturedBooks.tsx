@@ -3,6 +3,7 @@ import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Search } from "lucide-react";
 
 const books = [
@@ -67,8 +68,18 @@ const books = [
 export const FeaturedBooks = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Extract unique categories
+  const categories = ["All", ...Array.from(new Set(books.map(book => book.category)))];
 
   const filteredBooks = books.filter((book) => {
+    // Category filter
+    if (selectedCategory && selectedCategory !== "All" && book.category !== selectedCategory) {
+      return false;
+    }
+    
+    // Search filter
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     
@@ -139,8 +150,22 @@ export const FeaturedBooks = () => {
             </Select>
           </div>
           
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground mt-2">
+          {/* Category Filter Chips */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            {categories.map((category) => (
+              <Badge
+                key={category}
+                variant={selectedCategory === category || (category === "All" && !selectedCategory) ? "default" : "outline"}
+                className="cursor-pointer transition-all hover:scale-105"
+                onClick={() => setSelectedCategory(category === "All" ? null : category)}
+              >
+                {category}
+              </Badge>
+            ))}
+          </div>
+          
+          {(searchQuery || selectedCategory) && (
+            <p className="text-sm text-muted-foreground mt-4">
               Found {filteredBooks.length} {filteredBooks.length === 1 ? "book" : "books"}
             </p>
           )}
