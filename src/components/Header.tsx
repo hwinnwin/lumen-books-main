@@ -1,4 +1,4 @@
-import { Book, Search, User, Menu, PenLine } from "lucide-react";
+import { Book, Search, User, Menu, PenLine, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -24,9 +24,13 @@ export const Header = () => {
           <a href="#" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors">
             Browse
           </a>
-          <a href="#" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors">
-            Collections
-          </a>
+          <button 
+            onClick={() => navigate("/my-books")}
+            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Library className="h-4 w-4" />
+            My Books
+          </button>
           <button 
             onClick={() => navigate("/create")}
             className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors flex items-center gap-1"
@@ -76,9 +80,16 @@ export const Header = () => {
             <a href="#" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors">
               Browse
             </a>
-            <a href="#" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors">
-              Collections
-            </a>
+            <button 
+              onClick={() => {
+                navigate("/my-books");
+                setIsMenuOpen(false);
+              }}
+              className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors flex items-center gap-2 text-left"
+            >
+              <Library className="h-4 w-4" />
+              My Books
+            </button>
             <button 
               onClick={() => {
                 navigate("/create");
