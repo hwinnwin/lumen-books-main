@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 const books = [
   {
+    bookId: "the-midnight-library",
     title: "The Midnight Library",
     author: "Matt Haig",
     category: "Fiction",
@@ -11,6 +12,7 @@ const books = [
     coverColor: "bg-gradient-to-br from-blue-500 to-purple-600",
   },
   {
+    bookId: "atomic-habits",
     title: "Atomic Habits",
     author: "James Clear",
     category: "Self-Help",
@@ -18,6 +20,7 @@ const books = [
     coverColor: "bg-gradient-to-br from-orange-500 to-red-600",
   },
   {
+    bookId: "project-hail-mary",
     title: "Project Hail Mary",
     author: "Andy Weir",
     category: "Sci-Fi",
@@ -25,6 +28,7 @@ const books = [
     coverColor: "bg-gradient-to-br from-teal-500 to-cyan-600",
   },
   {
+    bookId: "the-psychology-of-money",
     title: "The Psychology of Money",
     author: "Morgan Housel",
     category: "Finance",
@@ -32,6 +36,7 @@ const books = [
     coverColor: "bg-gradient-to-br from-green-500 to-emerald-700",
   },
   {
+    bookId: "educated",
     title: "Educated",
     author: "Tara Westover",
     category: "Memoir",
@@ -39,6 +44,7 @@ const books = [
     coverColor: "bg-gradient-to-br from-amber-500 to-yellow-600",
   },
   {
+    bookId: "dune",
     title: "Dune",
     author: "Frank Herbert",
     category: "Sci-Fi",

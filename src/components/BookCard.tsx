@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BookCardProps {
   title: string;
@@ -9,12 +10,14 @@ interface BookCardProps {
   category: string;
   rating: number;
   coverColor: string;
+  bookId: string;
 }
 
-export const BookCard = ({ title, author, category, rating, coverColor }: BookCardProps) => {
+export const BookCard = ({ title, author, category, rating, coverColor, bookId }: BookCardProps) => {
   return (
-    <Card className="group overflow-hidden border-border/50 hover:shadow-book transition-all duration-300 hover:-translate-y-1">
-      <CardContent className="p-0">
+    <Link to={`/book/${bookId}`}>
+      <Card className="group overflow-hidden border-border/50 hover:shadow-book transition-all duration-300 hover:-translate-y-1">
+        <CardContent className="p-0">
         {/* Book Cover */}
         <div 
           className={`h-64 ${coverColor} flex items-center justify-center relative overflow-hidden`}
@@ -52,5 +55,6 @@ export const BookCard = ({ title, author, category, rating, coverColor }: BookCa
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 };
