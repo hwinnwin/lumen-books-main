@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BookCard } from "./BookCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, Search } from "lucide-react";
 
 const books = [
@@ -65,6 +66,7 @@ const books = [
 
 export const FeaturedBooks = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("default");
 
   const filteredBooks = books.filter((book) => {
     const query = searchQuery.toLowerCase().trim();
@@ -75,6 +77,19 @@ export const FeaturedBooks = () => {
       book.author.toLowerCase().includes(query) ||
       book.category.toLowerCase().includes(query)
     );
+  });
+
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    switch (sortBy) {
+      case "rating":
+        return b.rating - a.rating;
+      case "title":
+        return a.title.localeCompare(b.title);
+      case "newest":
+        return books.indexOf(b) - books.indexOf(a);
+      default:
+        return 0;
+    }
   });
 
   return (
@@ -97,18 +112,33 @@ export const FeaturedBooks = () => {
           </Button>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-8 max-w-xl">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by title, author, or category..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 bg-card border-border focus-visible:ring-primary"
-            />
+        {/* Search and Sort Bar */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-xl">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by title, author, or category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-card border-border focus-visible:ring-primary"
+              />
+            </div>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-[180px] h-12 bg-card border-border">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border z-50">
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="rating">Highest Rating</SelectItem>
+                <SelectItem value="title">Title (A-Z)</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          
           {searchQuery && (
             <p className="text-sm text-muted-foreground mt-2">
               Found {filteredBooks.length} {filteredBooks.length === 1 ? "book" : "books"}
@@ -117,9 +147,9 @@ export const FeaturedBooks = () => {
         </div>
 
         {/* Books Grid */}
-        {filteredBooks.length > 0 ? (
+        {sortedBooks.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredBooks.map((book, index) => (
+            {sortedBooks.map((book, index) => (
               <BookCard key={index} {...book} />
             ))}
           </div>
