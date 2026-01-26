@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function MyBooks() {
   const navigate = useNavigate();
-  const { user, isConfigured } = useAuth();
+  const { user } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +41,12 @@ export default function MyBooks() {
 
   const handleDelete = async (id: string, title: string) => {
     try {
-      const success = await bookService.deleteBook(id, user?.id);
+      let success = false;
+      if (user?.id) {
+        success = await bookService.deleteBook(id, user.id);
+      } else {
+        success = bookService.deleteBookLocally(id);
+      }
       if (success) {
         toast.success(`"${title}" has been deleted`);
         loadBooks();
@@ -103,7 +108,7 @@ export default function MyBooks() {
             </div>
 
             {/* Cloud Status Banner */}
-            {!isConfigured && (
+            {!user && (
               <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
                 <p className="text-sm text-muted-foreground">
                   Your books are saved locally in this browser. Sign in to sync across devices and share with the community.

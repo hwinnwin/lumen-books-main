@@ -1,6 +1,21 @@
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { Book } from '@/types/book';
-import type { DbBook, DbBookInsert, DbBookUpdate } from '@/types/database';
+import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+
+type DbBook = {
+  id: string;
+  user_id: string;
+  title: string;
+  author: string;
+  category: string;
+  description: string;
+  content: string;
+  cover_color: string;
+  word_count: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 // Convert database book to app book format
 const dbToBook = (dbBook: DbBook): Book => ({
@@ -16,19 +31,7 @@ const dbToBook = (dbBook: DbBook): Book => ({
   wordCount: dbBook.word_count,
 });
 
-// Convert app book to database format
-const bookToDb = (book: Partial<Book>, userId: string): Partial<DbBookInsert> => ({
-  user_id: userId,
-  title: book.title,
-  author: book.author,
-  category: book.category,
-  description: book.description,
-  content: book.content,
-  cover_color: book.coverColor,
-  word_count: book.content ? book.content.split(/\s+/).filter(Boolean).length : 0,
-});
-
-// Local storage functions (fallback)
+// Local storage functions (fallback for when user is not logged in)
 const getLocalBooks = (): Book[] => {
   try {
     const books = localStorage.getItem('myBooks');
@@ -46,7 +49,7 @@ const saveLocalBooks = (books: Book[]): void => {
 export const bookService = {
   // Get all books for the current user
   async getMyBooks(userId?: string): Promise<Book[]> {
-    if (isSupabaseConfigured() && supabase && userId) {
+    if (userId) {
       const { data, error } = await supabase
         .from('books')
         .select('*')
@@ -67,84 +70,76 @@ export const bookService = {
 
   // Get all published books (for public gallery)
   async getPublishedBooks(): Promise<Book[]> {
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('books')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching published books:', error);
-        throw error;
-      }
-
-      return (data || []).map(dbToBook);
+    if (error) {
+      console.error('Error fetching published books:', error);
+      throw error;
     }
 
-    // No public gallery for local mode
-    return [];
+    return (data || []).map(dbToBook);
   },
 
   // Get a single book by ID
-  async getBookById(id: string, userId?: string): Promise<Book | null> {
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('id', id)
-        .single();
+  async getBookById(id: string): Promise<Book | null> {
+    const { data, error } = await supabase
+      .from('books')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-      if (error) {
-        if (error.code === 'PGRST116') return null; // Not found
-        console.error('Error fetching book:', error);
-        throw error;
-      }
-
-      return data ? dbToBook(data) : null;
+    if (error) {
+      console.error('Error fetching book:', error);
+      throw error;
     }
 
-    // Fallback to localStorage
-    const books = getLocalBooks();
-    return books.find(b => b.id === id) || null;
+    return data ? dbToBook(data) : null;
   },
 
   // Create a new book
   async createBook(
     book: Omit<Book, 'id' | 'createdAt' | 'updatedAt' | 'wordCount'>,
-    userId?: string
+    userId: string
   ): Promise<Book> {
     const wordCount = book.content.split(/\s+/).filter(Boolean).length;
 
-    if (isSupabaseConfigured() && supabase && userId) {
-      const dbBook: DbBookInsert = {
-        user_id: userId,
-        title: book.title,
-        author: book.author,
-        category: book.category,
-        description: book.description,
-        content: book.content,
-        cover_color: book.coverColor,
-        word_count: wordCount,
-        is_published: false,
-      };
+    const dbBook: TablesInsert<'books'> = {
+      user_id: userId,
+      title: book.title,
+      author: book.author,
+      category: book.category,
+      description: book.description,
+      content: book.content,
+      cover_color: book.coverColor,
+      word_count: wordCount,
+      is_published: false,
+    };
 
-      const { data, error } = await supabase
-        .from('books')
-        .insert(dbBook)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('books')
+      .insert(dbBook)
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating book:', error);
-        throw error;
-      }
-
-      return dbToBook(data);
+    if (error) {
+      console.error('Error creating book:', error);
+      throw error;
     }
 
-    // Fallback to localStorage
+    return dbToBook(data);
+  },
+
+  // Create book locally (for non-authenticated users)
+  createBookLocally(
+    book: Omit<Book, 'id' | 'createdAt' | 'updatedAt' | 'wordCount'>
+  ): Book {
     const books = getLocalBooks();
+    const wordCount = book.content.split(/\s+/).filter(Boolean).length;
+
     const newBook: Book = {
       ...book,
       id: `book-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -162,37 +157,40 @@ export const bookService = {
   async updateBook(
     id: string,
     updates: Partial<Omit<Book, 'id' | 'createdAt' | 'updatedAt' | 'wordCount'>>,
-    userId?: string
+    userId: string
   ): Promise<Book | null> {
-    if (isSupabaseConfigured() && supabase && userId) {
-      const dbUpdates: DbBookUpdate = {
-        ...(updates.title && { title: updates.title }),
-        ...(updates.author && { author: updates.author }),
-        ...(updates.category && { category: updates.category }),
-        ...(updates.description !== undefined && { description: updates.description }),
-        ...(updates.content !== undefined && { content: updates.content }),
-        ...(updates.coverColor && { cover_color: updates.coverColor }),
-        ...(updates.content && { word_count: updates.content.split(/\s+/).filter(Boolean).length }),
-        updated_at: new Date().toISOString(),
-      };
+    const dbUpdates: TablesUpdate<'books'> = {
+      ...(updates.title && { title: updates.title }),
+      ...(updates.author && { author: updates.author }),
+      ...(updates.category && { category: updates.category }),
+      ...(updates.description !== undefined && { description: updates.description }),
+      ...(updates.content !== undefined && { content: updates.content }),
+      ...(updates.coverColor && { cover_color: updates.coverColor }),
+      ...(updates.content && { word_count: updates.content.split(/\s+/).filter(Boolean).length }),
+      updated_at: new Date().toISOString(),
+    };
 
-      const { data, error } = await supabase
-        .from('books')
-        .update(dbUpdates)
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('books')
+      .update(dbUpdates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error updating book:', error);
-        throw error;
-      }
-
-      return data ? dbToBook(data) : null;
+    if (error) {
+      console.error('Error updating book:', error);
+      throw error;
     }
 
-    // Fallback to localStorage
+    return data ? dbToBook(data) : null;
+  },
+
+  // Update book locally
+  updateBookLocally(
+    id: string,
+    updates: Partial<Omit<Book, 'id' | 'createdAt' | 'updatedAt' | 'wordCount'>>
+  ): Book | null {
     const books = getLocalBooks();
     const bookIndex = books.findIndex(b => b.id === id);
 
@@ -213,23 +211,23 @@ export const bookService = {
   },
 
   // Delete a book
-  async deleteBook(id: string, userId?: string): Promise<boolean> {
-    if (isSupabaseConfigured() && supabase && userId) {
-      const { error } = await supabase
-        .from('books')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId);
+  async deleteBook(id: string, userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('books')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
-      if (error) {
-        console.error('Error deleting book:', error);
-        throw error;
-      }
-
-      return true;
+    if (error) {
+      console.error('Error deleting book:', error);
+      throw error;
     }
 
-    // Fallback to localStorage
+    return true;
+  },
+
+  // Delete book locally
+  deleteBookLocally(id: string): boolean {
     const books = getLocalBooks();
     const filteredBooks = books.filter(b => b.id !== id);
 
@@ -240,27 +238,25 @@ export const bookService = {
   },
 
   // Publish/unpublish a book
-  async setPublished(id: string, isPublished: boolean, userId?: string): Promise<Book | null> {
-    if (isSupabaseConfigured() && supabase && userId) {
-      const { data, error } = await supabase
-        .from('books')
-        .update({ is_published: isPublished, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('user_id', userId)
-        .select()
-        .single();
+  async setPublished(id: string, isPublished: boolean, userId: string): Promise<Book | null> {
+    const { data, error } = await supabase
+      .from('books')
+      .update({ is_published: isPublished, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error updating publish status:', error);
-        throw error;
-      }
-
-      return data ? dbToBook(data) : null;
+    if (error) {
+      console.error('Error updating publish status:', error);
+      throw error;
     }
 
-    // No publish feature for local mode
-    return null;
+    return data ? dbToBook(data) : null;
   },
+
+  // Get local books (for non-authenticated users)
+  getLocalBooks,
 };
 
 export default bookService;

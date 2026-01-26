@@ -45,7 +45,7 @@ export default function ReadBook() {
   const loadBook = async (id: string) => {
     setLoading(true);
     try {
-      const foundBook = await bookService.getBookById(id, user?.id);
+      const foundBook = await bookService.getBookById(id);
       if (foundBook) {
         setBook(foundBook);
       } else {

@@ -40,7 +40,7 @@ export default function CreateBook() {
   const loadBook = async (id: string) => {
     setLoading(true);
     try {
-      const book = await bookService.getBookById(id, user?.id);
+      const book = await bookService.getBookById(id);
       if (book) {
         setFormData({
           title: book.title,
@@ -83,8 +83,8 @@ export default function CreateBook() {
 
     setSaving(true);
     try {
-      if (isEditing && editId) {
-        const updated = await bookService.updateBook(editId, formData, user?.id);
+      if (isEditing && editId && user?.id) {
+        const updated = await bookService.updateBook(editId, formData, user.id);
         if (updated) {
           toast.success("Your book has been updated!", {
             description: `"${formData.title}" has been saved.`,
@@ -93,10 +93,17 @@ export default function CreateBook() {
         } else {
           toast.error("Failed to update book");
         }
-      } else {
-        await bookService.createBook(formData, user?.id);
+      } else if (user?.id) {
+        await bookService.createBook(formData, user.id);
         toast.success("Your book has been created!", {
           description: `"${formData.title}" is now in your library.`,
+        });
+        navigate("/my-books");
+      } else {
+        // Fallback to local storage for non-authenticated users
+        bookService.createBookLocally(formData);
+        toast.success("Your book has been created!", {
+          description: `"${formData.title}" is saved locally.`,
         });
         navigate("/my-books");
       }

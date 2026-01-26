@@ -20,7 +20,7 @@ interface AuthDialogProps {
 }
 
 export const AuthDialog = ({ trigger }: AuthDialogProps) => {
-  const { user, signIn, signUp, signOut, loading, isConfigured } = useAuth();
+  const { user, signIn, signUp, signOut, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState('');
@@ -53,7 +53,7 @@ export const AuthDialog = ({ trigger }: AuthDialogProps) => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Account created! Please check your email to verify.');
+      toast.success('Account created successfully!');
       setOpen(false);
       setEmail('');
       setPassword('');
@@ -66,19 +66,6 @@ export const AuthDialog = ({ trigger }: AuthDialogProps) => {
     await signOut();
     toast.success('Signed out successfully');
   };
-
-  // If not configured, show a simplified button
-  if (!isConfigured) {
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => toast.info('Cloud features coming soon! Your books are saved locally.')}
-      >
-        <User className="h-5 w-5" />
-      </Button>
-    );
-  }
 
   // If user is logged in, show user menu
   if (user) {
