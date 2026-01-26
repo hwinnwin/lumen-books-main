@@ -1,8 +1,9 @@
-import { Book, Search, User, Menu, PenLine, Library } from "lucide-react";
+import { Book, Search, Menu, PenLine, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthDialog } from "@/components/AuthDialog";
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -57,10 +58,8 @@ export const Header = () => {
           <Button variant="ghost" size="icon" className="md:hidden">
             <Search className="h-5 w-5" />
           </Button>
-          
-          <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
-          </Button>
+
+          <AuthDialog />
 
           <Button 
             variant="ghost" 

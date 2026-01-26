@@ -6,33 +6,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, PenLine, Trash2, Calendar, FileText, Sparkles } from "lucide-react";
-import { getMyBooks, deleteBook, type Book } from "@/types/book";
+import { BookOpen, PenLine, Trash2, Calendar, FileText, Sparkles, Loader2, BookOpenCheck } from "lucide-react";
+import { type Book } from "@/types/book";
+import { bookService } from "@/services/bookService";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function MyBooks() {
   const navigate = useNavigate();
+  const { user, isConfigured } = useAuth();
   const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadBooks();
-  }, []);
+  }, [user]);
 
-  const loadBooks = () => {
-    const myBooks = getMyBooks();
-    // Sort by most recently updated
-    const sortedBooks = myBooks.sort((a, b) => 
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
-    setBooks(sortedBooks);
+  const loadBooks = async () => {
+    setLoading(true);
+    try {
+      const myBooks = await bookService.getMyBooks(user?.id);
+      // Sort by most recently updated
+      const sortedBooks = myBooks.sort((a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+      setBooks(sortedBooks);
+    } catch (error) {
+      console.error('Error loading books:', error);
+      toast.error('Failed to load books');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: string, title: string) => {
-    const success = deleteBook(id);
-    if (success) {
-      toast.success(`"${title}" has been deleted`);
-      loadBooks();
-    } else {
+  const handleDelete = async (id: string, title: string) => {
+    try {
+      const success = await bookService.deleteBook(id, user?.id);
+      if (success) {
+        toast.success(`"${title}" has been deleted`);
+        loadBooks();
+      } else {
+        toast.error("Failed to delete book");
+      }
+    } catch (error) {
+      console.error('Error deleting book:', error);
       toast.error("Failed to delete book");
     }
   };
@@ -41,19 +58,23 @@ export default function MyBooks() {
     navigate(`/create?edit=${id}`);
   };
 
+  const handleRead = (id: string) => {
+    navigate(`/read/${id}`);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 bg-gradient-hero">
         <div className="container px-4 py-12 md:px-6">
           {/* Header Section */}
@@ -66,12 +87,12 @@ export default function MyBooks() {
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold text-foreground">My Books</h1>
                   <p className="text-muted-foreground">
-                    {books.length} {books.length === 1 ? 'book' : 'books'} in your library
+                    {loading ? 'Loading...' : `${books.length} ${books.length === 1 ? 'book' : 'books'} in your library`}
                   </p>
                 </div>
               </div>
-              
-              <Button 
+
+              <Button
                 size="lg"
                 onClick={() => navigate("/create")}
                 className="bg-primary hover:bg-primary/90"
@@ -80,11 +101,27 @@ export default function MyBooks() {
                 Write New Book
               </Button>
             </div>
+
+            {/* Cloud Status Banner */}
+            {!isConfigured && (
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground">
+                  Your books are saved locally in this browser. Sign in to sync across devices and share with the community.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Books Grid */}
           <div className="max-w-6xl mx-auto">
-            {books.length === 0 ? (
+            {loading ? (
+              <Card className="border-border shadow-book">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                  <p className="text-muted-foreground">Loading your books...</p>
+                </CardContent>
+              </Card>
+            ) : books.length === 0 ? (
               <Card className="border-border shadow-book">
                 <CardContent className="flex flex-col items-center justify-center py-16">
                   <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -94,7 +131,7 @@ export default function MyBooks() {
                   <p className="text-muted-foreground text-center max-w-md mb-6">
                     Start your writing journey by creating your first book. Share your stories with the Lumen community!
                   </p>
-                  <Button 
+                  <Button
                     size="lg"
                     onClick={() => navigate("/create")}
                     className="bg-primary hover:bg-primary/90"
@@ -107,14 +144,15 @@ export default function MyBooks() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {books.map((book) => (
-                  <Card 
+                  <Card
                     key={book.id}
                     className="border-border shadow-book hover:shadow-medium transition-all overflow-hidden group"
                   >
                     {/* Cover Preview */}
-                    <div 
-                      className="h-32 relative"
+                    <div
+                      className="h-32 relative cursor-pointer"
                       style={{ backgroundColor: book.coverColor }}
+                      onClick={() => handleRead(book.id)}
                     >
                       <div className="absolute inset-0 bg-gradient-to-b from-black/0 to-black/40" />
                       <div className="absolute bottom-3 left-4 right-4">
@@ -155,21 +193,29 @@ export default function MyBooks() {
                           variant="outline"
                           size="sm"
                           className="flex-1"
+                          onClick={() => handleRead(book.id)}
+                        >
+                          <BookOpenCheck className="mr-1.5 h-3.5 w-3.5" />
+                          Read
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
                           onClick={() => handleEdit(book.id)}
                         >
                           <PenLine className="mr-1.5 h-3.5 w-3.5" />
                           Edit
                         </Button>
-                        
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="flex-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
-                              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                              Delete
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -200,7 +246,7 @@ export default function MyBooks() {
           </div>
 
           {/* Tips Section */}
-          {books.length > 0 && (
+          {books.length > 0 && !loading && (
             <div className="max-w-6xl mx-auto mt-8">
               <Card className="bg-accent/5 border-accent/20">
                 <CardContent className="pt-6">
